@@ -4,8 +4,6 @@ using BlazorEcommerce.Utilities;
 using Microsoft.AspNetCore.Components;
 using Stripe.Checkout;
 
-
-
 namespace BlazorEcommerce.Services
 {
     public class PaymentService
@@ -54,10 +52,19 @@ namespace BlazorEcommerce.Services
 
         public async Task<OrderHeader> CheckPaymentStatusAndUpdateOrder(string sessionId)
         {
+            // Ensure we get order via repository (async)
             OrderHeader orderHeader = await _orderRepository.GetOrderBySessionIdAsync(sessionId);
+            if (orderHeader == null)
+            {
+                return null!;
+            }
+
             var service = new SessionService();
-            var session = service.Get(sessionId);
-            if (session.PaymentStatus.ToLower() == "paid")
+            // use async Get to avoid blocking thread
+            var session = await service.GetAsync(sessionId);
+
+            if (!string.IsNullOrEmpty(session?.PaymentStatus) &&
+                string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
             {
                 await _orderRepository.UpdateStatusAsync(orderHeader.Id, ProcessingStatus.Approved, session.PaymentIntentId);
             }

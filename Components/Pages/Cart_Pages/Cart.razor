@@ -7,8 +7,8 @@
 @inject IShoppingCartRepository _cartRepository
 @inject IOrderRepository _orderRepository 
 @inject NavigationManager _navigationManager
-@* @inject SharedStateService _sharedStateService
-@inject PaymentService _paymentService  *@
+@inject SharedStateService _sharedStateService
+@inject PaymentService _paymentService 
 @attribute [Authorize]
 
 @if (IsProcessing)
@@ -178,9 +178,9 @@ else
         await Task.Yield();
         OrderHeader.OrderDetails = RoleConstant.ConvertShoppingCartListToOrderDetail(ShoppingCarts.ToList());
 
-        //var session = _paymentService.CreateStripeCheckoutSession(OrderHeader);
-        // OrderHeader.SessionId = session.Id;
+        var session = _paymentService.CreateStripeCheckoutSession(OrderHeader);
+        OrderHeader.SessionId = session.Id;
         await _orderRepository.CreateAsync(OrderHeader);
-        // _navigationManager.NavigateTo(session.Url);
+        _navigationManager.NavigateTo(session.Url);
     }
 }
