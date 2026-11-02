@@ -1,8 +1,8 @@
-﻿namespace BlazorEcommerce.Services
+namespace BlazorEcommerce.Services
 {
     public class SharedStateService
     {
-        public event Action OnChange;
+        public event Action? OnChange;
         private int _totalCartCount;
 
         public int TotalCartCount

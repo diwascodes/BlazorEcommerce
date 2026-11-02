@@ -1,4 +1,4 @@
-﻿using BlazorEcommerce.Data.Models;
+using BlazorEcommerce.Data.Models;
 
 namespace BlazorEcommerce.Utilities
 {
@@ -17,8 +17,8 @@ namespace BlazorEcommerce.Utilities
                 {
                     ProductId = cart.ProductId,
                     Count = cart.Count,
-                    Price = Convert.ToDouble(cart.Product.Price),
-                    ProductName = cart.Product.Name
+                    Price = cart.Product != null ? Convert.ToDouble(cart.Product.Price) : 0,
+                    ProductName = cart.Product?.Name ?? string.Empty
                 };
                 orderDetails.Add(orderDetail);
             }
@@ -36,4 +36,3 @@ namespace BlazorEcommerce.Utilities
         public static string Cancelled = "Cancelled";
     }
 }
-

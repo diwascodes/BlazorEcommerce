@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using System.Globalization
 @using BlazorEcommerce.Services
 @using BlazorEcommerce.Data.Models
@@ -7,7 +7,7 @@
 @inject NavigationManager _NavigationManager
 @inject IProductRepository _productRepository
 @inject ICategoryRepository _categoryRepository
- @inject IShoppingCartRepository _cartRepository
+@inject IShoppingCartRepository _cartRepository
 @inject SharedStateService _SharedStateService 
 
 <PageTitle>Home</PageTitle>
@@ -105,7 +105,7 @@ else
                                     @prod.Name
                                 </h5>
                                 <p class="card-text text-muted flex-grow-1" style="font-size: 0.9rem; line-height: 1.6;">
-                                    @((MarkupString)@prod.Description)
+                                    @((MarkupString)(prod.Description ?? string.Empty))
                                 </p>
                                 
                                 <!-- Add to Cart Button -->
@@ -168,7 +168,7 @@ else
         }
     }
 
-    private void FilterProductByName(string newValueOfSearchText)
+    private void FilterProductByName(string? newValueOfSearchText)
     {
         if (string.IsNullOrWhiteSpace(newValueOfSearchText))
         {
@@ -177,9 +177,9 @@ else
         else
         {
             FilteredProducts = Products
-            .Where(u => u.Name.Contains(newValueOfSearchText, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                .Where(u => !string.IsNullOrEmpty(u.Name) && u.Name.Contains(newValueOfSearchText, StringComparison.InvariantCultureIgnoreCase)).ToList();
         }
-        _searchText = newValueOfSearchText;
+        _searchText = newValueOfSearchText ?? string.Empty;
     }
 
     private string GetActiveTabClass(int categoryId)
@@ -202,16 +202,18 @@ else
         {
             //add item to cart
             var userId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
-            var result = await
-            _cartRepository.UpdateCartAsync(userId, product.Id, 1);
-            _SharedStateService.TotalCartCount = await _cartRepository.GetTotalCartCartCountAsync(userId);
-            if (result)
+            if (!string.IsNullOrEmpty(userId))
             {
-                _JS?.ToastrSuccess("Product added to cart successfully");
-            }
-            else
-            {
-                _JS?.ToastrError("Error encountered");
+                var result = await _cartRepository.UpdateCartAsync(userId, product.Id, 1);
+                _SharedStateService.TotalCartCount = await _cartRepository.GetTotalCartCartCountAsync(userId);
+                if (result)
+                {
+                    _JS?.ToastrSuccess("Product added to cart successfully");
+                }
+                else
+                {
+                    _JS?.ToastrError("Error encountered");
+                }
             }
         }
     }

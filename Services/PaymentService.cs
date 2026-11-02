@@ -1,4 +1,4 @@
-﻿using BlazorEcommerce.Data.Models;
+using BlazorEcommerce.Data.Models;
 using BlazorEcommerce.Repository.IRepository;
 using BlazorEcommerce.Utilities;
 using Microsoft.AspNetCore.Components;
@@ -19,7 +19,6 @@ namespace BlazorEcommerce.Services
 
         public Session CreateStripeCheckoutSession(OrderHeader orderHeader)
         {
-
             var lineItems = orderHeader.OrderDetails
                 .Select(order => new SessionLineItemOptions
                 {
@@ -31,7 +30,6 @@ namespace BlazorEcommerce.Services
                         {
                             Name = order.ProductName
                         }
-
                     },
                     Quantity = order.Count
                 }).ToList();
@@ -50,23 +48,30 @@ namespace BlazorEcommerce.Services
             return session;
         }
 
-        public async Task<OrderHeader> CheckPaymentStatusAndUpdateOrder(string sessionId)
+        public async Task<OrderHeader?> CheckPaymentStatusAndUpdateOrder(string sessionId)
         {
-            // Ensure we get order via repository (async)
-            OrderHeader orderHeader = await _orderRepository.GetOrderBySessionIdAsync(sessionId);
+            OrderHeader? orderHeader = await _orderRepository.GetOrderBySessionIdAsync(sessionId);
             if (orderHeader == null)
             {
-                return null!;
+                return null;
             }
 
             var service = new SessionService();
-            // use async Get to avoid blocking thread
             var session = await service.GetAsync(sessionId);
 
             if (!string.IsNullOrEmpty(session?.PaymentStatus) &&
                 string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
             {
-                await _orderRepository.UpdateStatusAsync(orderHeader.Id, ProcessingStatus.Approved, session.PaymentIntentId);
+                var updatedOrder = await _orderRepository.UpdateStatusAsync(orderHeader.Id, ProcessingStatus.Approved, session.PaymentIntentId);
+                if (updatedOrder != null)
+                {
+                    orderHeader = updatedOrder;
+                }
+                else
+                {
+                    orderHeader.Status = ProcessingStatus.Approved;
+                    orderHeader.PaymentIntentId = session.PaymentIntentId;
+                }
             }
             return orderHeader;
         }

@@ -1,16 +1,17 @@
-﻿@page "/order/details/{Id:int}"
+@page "/order/details/{Id:int}"
 @using System.Globalization
 @using BlazorEcommerce.Utilities
 @inject IOrderRepository _orderRepository
 @inject IJSRuntime _JS
 @inject AuthenticationStateProvider _AuthenticationStateProvider
+
 @if (IsProcessing)
 {
     <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
         <img src="/images/loading.gif" alt="loading" />
     </div>
 }
-else
+else if (OrderHeader != null)
 {
     <div class="container my-5 mx-auto p-5 w-100" style="max-width: 950px;">
         <div class="card" style="max-width: 750px;">
@@ -42,7 +43,7 @@ else
                             </p>
                         </div>
                         <div class="ps-4">
-                            @((details.Price * @details.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))
+                            @((details.Price * details.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))
                         </div>
 
                     </div>
@@ -59,13 +60,11 @@ else
                         <a href="order/list" class="btn btn-secondary  m-2 p-2" style="width:150px;">Back to Orders</a>
                     </div>
                     <div class="col-7 text-end">
-                        @if (OrderHeader.Status != ProcessingStatus.Cancelled && OrderHeader.Status != ProcessingStatus.Completed
-                                            && _AuthenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult().User?.IsInRole(RoleConstant.Admin) == true
-                                            )
+                        @if (OrderHeader.Status != ProcessingStatus.Cancelled && OrderHeader.Status != ProcessingStatus.Completed && IsAdmin)
                         {
                             <button class="btn btn-danger m-2 p-2" @onclick="() => UpdateStatus(ProcessingStatus.Cancelled)" style="width:150px;">Cancel Order</button>
 
-                            @if (OrderHeader.Status ==ProcessingStatus.Approved)
+                            @if (OrderHeader.Status == ProcessingStatus.Approved)
                             {
                                 <button class="btn btn-primary m-2 p-2" @onclick="() => UpdateStatus(ProcessingStatus.ReadyForPickUp)" style="width:150px;">Ready for Pickup</button>
                             }
@@ -79,9 +78,13 @@ else
             </div>
         </div>
     </div>
-
-
-
+}
+else
+{
+    <div class="container my-5 text-center">
+        <h3 class="text-danger">Order not found.</h3>
+        <a href="order/list" class="btn btn-primary mt-3">Back to Orders</a>
+    </div>
 }
 
 @code {
@@ -89,10 +92,12 @@ else
     [Parameter]
     public int Id { get; set; }
     private OrderHeader? OrderHeader = null;
+    private bool IsAdmin { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-
+        var authState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
+        IsAdmin = authState.User?.IsInRole(RoleConstant.Admin) == true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -103,18 +108,20 @@ else
             IsProcessing = false;
             StateHasChanged();
         }
-        //return base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task LoadOrder()
     {
         OrderHeader = await _orderRepository.GetAsync(Id);
-        // Load categories
     }
 
     private async Task UpdateStatus(string newStatus)
     {
         await _orderRepository.UpdateStatusAsync(Id, newStatus, "");
+        if (OrderHeader != null)
+        {
+            OrderHeader.Status = newStatus;
+        }
         _JS?.ToastrSuccess("Status updated successfully to " + newStatus);
     }
 }

@@ -1,4 +1,4 @@
-﻿@page "/order/list"
+@page "/order/list"
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
 @using BlazorEcommerce.Utilities
@@ -61,7 +61,7 @@ else
     private string? UserId { get; set; }
 
     [CascadingParameter]
-    public Task<AuthenticationState> AuthenticationState { get; set; }
+    public Task<AuthenticationState> AuthenticationState { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {

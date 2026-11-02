@@ -1,4 +1,4 @@
-﻿using BlazorEcommerce.Data;
+using BlazorEcommerce.Data;
 using BlazorEcommerce.Data.Models;
 using BlazorEcommerce.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -24,17 +24,23 @@ namespace BlazorEcommerce.Repository
         public async Task<bool> DeleteAsync(int id)
         {
             var obj = await _db.Products.FirstOrDefaultAsync(u => u.Id == id);
-            var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, obj.ImageUrl.TrimStart('/'));
-            if (File.Exists(imagePath))
+            if (obj == null)
             {
-                File.Delete(imagePath);
+                return false;
             }
-            if (obj != null)
+
+            if (!string.IsNullOrEmpty(obj.ImageUrl))
             {
-                _db.Products.Remove(obj);
-                return (await _db.SaveChangesAsync()) > 0;
+                var webRoot = _webHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var imagePath = Path.Combine(webRoot, obj.ImageUrl.TrimStart('/'));
+                if (File.Exists(imagePath))
+                {
+                    File.Delete(imagePath);
+                }
             }
-            return false;
+
+            _db.Products.Remove(obj);
+            return (await _db.SaveChangesAsync()) > 0;
         }
 
         public async Task<Product> GetAsync(int id)

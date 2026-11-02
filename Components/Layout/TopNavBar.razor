@@ -1,6 +1,7 @@
-﻿@using BlazorEcommerce.Services
+@using BlazorEcommerce.Services
+@implements IDisposable
 @inject AuthenticationStateProvider _authStateProvider
- @inject SharedStateService _sharedstateService
+@inject SharedStateService _sharedstateService
 @inject IShoppingCartRepository _shoppingCartRepository
  
 <nav class="navbar navbar-expand-md navbar-dark modern-navbar">
@@ -77,10 +78,10 @@
 
 
 @code {
-	protected override void OnInitialized()
+	protected override async Task OnInitializedAsync()
 	{
 		_sharedstateService.OnChange += OnSharedStateChange;
-		GetInitialCount();
+		await GetInitialCount();
 	}
 
 	private void OnSharedStateChange()
@@ -92,11 +93,18 @@
 	{
 		var authState = await _authStateProvider.GetAuthenticationStateAsync();
 		var user = authState.User;
+		var userId = user?.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
 
-		_sharedstateService.TotalCartCount =
-		await _shoppingCartRepository.GetTotalCartCartCountAsync(user?.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value);
-
+		if (!string.IsNullOrEmpty(userId))
+		{
+			_sharedstateService.TotalCartCount = await _shoppingCartRepository.GetTotalCartCartCountAsync(userId);
+		}
+		else
+		{
+			_sharedstateService.TotalCartCount = 0;
+		}
 	}
+
 	public void Dispose()
 	{
 		_sharedstateService.OnChange -= OnSharedStateChange;

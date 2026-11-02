@@ -36,6 +36,17 @@
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
-    private IComponentRenderMode? PageRenderMode =>
-        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+    private IComponentRenderMode? PageRenderMode
+    {
+        get
+        {
+            // Identity account endpoints must use static SSR to prevent concurrent DbContext operations
+            if (HttpContext.Request.Path.StartsWithSegments("/Account"))
+            {
+                return null;
+            }
+
+            return HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+        }
+    }
 }

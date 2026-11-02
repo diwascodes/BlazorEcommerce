@@ -1,9 +1,7 @@
-﻿using BlazorEcommerce.Data;
+using BlazorEcommerce.Data;
 using BlazorEcommerce.Data.Models;
 using BlazorEcommerce.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
-using BlazorEcommerce.Data;
-using BlazorEcommerce.Repository.IRepository;
 
 namespace YumBlazor.Repository
 {
@@ -68,8 +66,5 @@ namespace YumBlazor.Repository
             }
             return await _db.SaveChangesAsync() > 0;
         }
-
-
-
     }
 }

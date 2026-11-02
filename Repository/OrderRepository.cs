@@ -1,4 +1,4 @@
-﻿using BlazorEcommerce.Data;
+using BlazorEcommerce.Data;
 using BlazorEcommerce.Data.Models;
 using BlazorEcommerce.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -31,19 +31,19 @@ namespace BlazorEcommerce.Repository
             return await _db.OrderHeaders.ToListAsync();
         }
 
-        public async Task<OrderHeader> GetAsync(int id)
+        public async Task<OrderHeader?> GetAsync(int id)
         {
             return await _db.OrderHeaders.Include(u => u.OrderDetails).FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<OrderHeader> GetOrderBySessionIdAsync(string sessionId)
+        public async Task<OrderHeader?> GetOrderBySessionIdAsync(string sessionId)
         {
             return await _db.OrderHeaders.FirstOrDefaultAsync(u => u.SessionId == sessionId);
         }
 
-        public async Task<OrderHeader> UpdateStatusAsync(int orderId, string status, string paymentIntentId)
+        public async Task<OrderHeader?> UpdateStatusAsync(int orderId, string status, string paymentIntentId)
         {
-            var orderHeader = _db.OrderHeaders.FirstOrDefault(u => u.Id == orderId);
+            var orderHeader = await _db.OrderHeaders.FirstOrDefaultAsync(u => u.Id == orderId);
             if (orderHeader != null)
             {
                 orderHeader.Status = status;

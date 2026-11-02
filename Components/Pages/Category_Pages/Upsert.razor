@@ -1,4 +1,4 @@
-﻿@page "/category/create"
+@page "/category/create"
 @page "/category/update/{id:int}"
 @inject ICategoryRepository _categoryRepository
 @inject NavigationManager _navigationManager
@@ -55,9 +55,14 @@ else
     public int Id { get; set; }
 
     [SupplyParameterFromForm(FormName = "CategoryUpsertForm")]
-    private Category Category { get; set; } = new Category();
+    private Category Category { get; set; } = default!;
 
     private bool IsProcessing { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        Category ??= new Category();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -67,7 +72,6 @@ else
             IsProcessing = false;
             StateHasChanged();
         }
-        //return base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task LoadCategory()
@@ -85,7 +89,7 @@ else
         {
             //create
             await _categoryRepository.CreateAsync(Category);
-             await _JS.ToastrSuccess("Category Created Successfully");
+            await _JS.ToastrSuccess("Category Created Successfully");
         }
         else
         {

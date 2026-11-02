@@ -1,9 +1,6 @@
-﻿@page "/order/confirmation/{session_id}"
-@using BlazorEcommerce.Services
+@page "/order/confirmation/{session_id}"
 @using BlazorEcommerce.Utilities
-@inject PaymentService _paymentService
-@inject IShoppingCartRepository _shoppingCartRepository
-
+@inject IOrderRepository _orderRepository
 
 @if (IsProcessing)
 {
@@ -11,32 +8,62 @@
         <img src="/images/loading.gif" alt="loading" />
     </div>
 }
+else if (orderHeader != null)
+{
+    <div class="text-center p-4">
+        @if (orderHeader.Status == ProcessingStatus.Approved)
+        {
+            <h1 class="pt-4 text-success">You are one step closer to delicious food!</h1>
+            <p>Your order is confirmed! Please note your order ID for any questions.</p>
+            <p>Order ID: <b>@orderHeader.Id</b></p>
+            <hr />
+            <img src="/images/lawn_leaf.jpg" width="40%" alt="Order confirmed" />
+            <hr />
+            <a href="/" class="btn btn-success mt-2">Continue Shopping</a>
+        }
+        else
+        {
+            <div class="card p-4 mx-auto" style="max-width: 600px;">
+                <h2 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i>Processing Payment Confirmation</h2>
+                <p>We are waiting for server confirmation from Stripe for your order <b>#@orderHeader.Id</b>.</p>
+                <p>Current Status: <span class="badge bg-warning text-dark">@orderHeader.Status</span></p>
+                <div class="mt-3">
+                    <button class="btn btn-primary" @onclick="CheckStatusAsync">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Status
+                    </button>
+                    <a href="/order/list" class="btn btn-outline-secondary ms-2">View My Orders</a>
+                </div>
+            </div>
+        }
+    </div>
+}
 else
 {
-    <div class="text-center">
-        <h1 class="pt-4 text-success">You are one stop closer to delicious food!</h1>
-        <p>Your order is confirmed! Please note your order ID for any questions. </p>
-        <p>Order ID: <b>@orderHeader.Id</b></p>
-        <hr />
-        <img src="/images/lawn_leaf.jpg" width="40%" />
-        <hr />
+    <div class="text-center pt-5">
+        <h2 class="text-danger">Order not found.</h2>
+        <p class="text-muted">We could not locate an order associated with this checkout session.</p>
+        <a href="/" class="btn btn-primary mt-3">Back to Home</a>
     </div>
-
 }
 
 @code {
     [Parameter]
-    public string session_id { get; set; }
+    public string session_id { get; set; } = string.Empty;
 
     private bool IsProcessing { get; set; } = true;
-    private OrderHeader orderHeader { get; set; }
+    private OrderHeader? orderHeader { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        orderHeader = await _paymentService.CheckPaymentStatusAndUpdateOrder(session_id);
-        if (orderHeader.Status == ProcessingStatus.Approved)
+        await CheckStatusAsync();
+    }
+
+    private async Task CheckStatusAsync()
+    {
+        IsProcessing = true;
+        if (!string.IsNullOrEmpty(session_id))
         {
-            await _shoppingCartRepository.ClearCartAsync(orderHeader.UserId);
+            orderHeader = await _orderRepository.GetOrderBySessionIdAsync(session_id);
         }
         IsProcessing = false;
     }

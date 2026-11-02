@@ -1,4 +1,4 @@
-﻿@page "/product/create"
+@page "/product/create"
 @page "/product/update/{id:int}"
 @using Radzen.Blazor
 @inject IProductRepository _productRepository
@@ -103,16 +103,18 @@ else
     public int Id { get; set; }
 
     [SupplyParameterFromForm]
-    private Product Product { get; set; } = new Product();
+    private Product Product { get; set; } = default!;
 
     private IEnumerable<Category> _categories = new List<Category>();
 
-    private string? _directoryPath { get; set; }
+    private string _directoryPath = string.Empty;
     private bool IsProcessing { get; set; } = true;
 
     protected override Task OnInitializedAsync()
     {
-        _directoryPath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "product");
+        Product ??= new Product();
+        var webRoot = _webHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        _directoryPath = Path.Combine(webRoot, "images", "product");
         return base.OnInitializedAsync();
     }
 
@@ -124,7 +126,6 @@ else
             IsProcessing = false;
             StateHasChanged();
         }
-        //return base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task LoadProductAndCategoryList()
@@ -178,9 +179,7 @@ else
         if (Product.ImageUrl == null)
             return;
 
-
-            var fileToDelete = Product.ImageUrl.Split('/').Reverse().First();
-
+        var fileToDelete = Product.ImageUrl.Split('/').Reverse().First();
         var filePathToDeleteImage = Path.Combine(_directoryPath, fileToDelete);
 
         if (!File.Exists(filePathToDeleteImage))
@@ -189,9 +188,8 @@ else
             return;
         }
 
-            File.Delete(filePathToDeleteImage);
-
-            Product.ImageUrl = null;
-            return;
+        File.Delete(filePathToDeleteImage);
+        Product.ImageUrl = null;
+        return;
     }
 }
